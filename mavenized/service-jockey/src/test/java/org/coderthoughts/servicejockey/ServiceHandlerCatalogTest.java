@@ -25,7 +25,7 @@ import org.osgi.framework.Version;
 
 public class ServiceHandlerCatalogTest extends TestCase {
     public void testReadConfigFile() throws Exception {
-        URL url = getClass().getResource("data/sj1.xml");
+        URL url = getClass().getResource("/data/sj1.xml");
         ServiceHandlerCatalog shc = new ServiceHandlerCatalog();
         shc.addDefinition(url);
         assertEquals(1, shc.restrictRules.size());
