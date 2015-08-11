@@ -13,4 +13,13 @@ public class ProxyRule extends Rule {
     public Map<String, Object> getAddProperties() {
         return addProperties;
     }
+    
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append(getClass().getSimpleName());
+        sb.append(", filter=").append(serviceFilter);
+        sb.append(", properties=").append(addProperties);
+        return sb.toString();
+    }
 }

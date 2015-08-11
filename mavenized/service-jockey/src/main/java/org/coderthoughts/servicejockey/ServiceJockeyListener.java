@@ -1,5 +1,6 @@
 package org.coderthoughts.servicejockey;
 
+import java.net.URL;
 import java.util.Dictionary;
 
 import org.osgi.framework.Bundle;
@@ -8,10 +9,13 @@ import org.osgi.framework.BundleEvent;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.util.tracker.BundleTracker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ServiceJockeyListener implements ServiceListener {
     final ServiceHandlerCatalog shc;
     BundleTracker bt;
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     public ServiceJockeyListener(BundleContext context, ServiceHandlerCatalog catalog) {
         shc = catalog;
@@ -20,14 +24,19 @@ public class ServiceJockeyListener implements ServiceListener {
             @Override
             @SuppressWarnings("unchecked")
             public Object addingBundle(Bundle bundle, BundleEvent event) {
-                System.out.println("*** Bundle: " + bundle.getSymbolicName());
                 Dictionary props = bundle.getHeaders();
                 Object header = props.get("Service-Jockey");
                 if (header != null) {
                     try {
-                        shc.addDefinition(bundle.getEntry("/" + header));
+                        final String path = "/" + header;
+                        final URL definition = bundle.getEntry(path);
+                        if(definition == null) {
+                            log.warn("ServiceJockey definition not found: {} for bundle {}", path, bundle.getSymbolicName());
+                        } else {
+                            shc.addDefinition(definition);
+                        }
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        log.error("Error while adding rules from bundle " + bundle.getSymbolicName(), e);
                     }
                 }
                 return super.addingBundle(bundle, event);

@@ -13,22 +13,24 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.Filter;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.framework.Version;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 public class ServiceHandlerCatalog {    
     private static final String SERVICE_JOCKEY_PROP = ".ServiceJockey";
     private static final Object SERVICE_JOCKEY_PROP_VAL = "Proxied";
 
+    private final Logger log = LoggerFactory.getLogger(getClass());
     private final DocumentBuilder parser;
     
     List<RestrictRule> restrictRules = new ArrayList<RestrictRule>();
@@ -63,14 +65,14 @@ public class ServiceHandlerCatalog {
     }
 
     private void addRestrictRules(Node node) throws Exception {
-        restrictRules.addAll(readRules(node, RestrictRule.class));
+        restrictRules.addAll(readRules("adding restrict", node, RestrictRule.class));
     }
 
     private void addProxyRules(Node node) throws Exception {
-        proxyRules.addAll(readRules(node, ProxyRule.class));
+        proxyRules.addAll(readRules("adding proxy", node, ProxyRule.class));
     }
     
-    private <T extends Rule> List<T> readRules(Node node, Class<T> ruleClass) throws Exception {
+    private <T extends Rule> List<T> readRules(String info, Node node, Class<T> ruleClass) throws Exception {
         List<T> rules = new ArrayList<T>();
         NodeList nl = node.getChildNodes();
         for (int i=0; i < nl.getLength(); i++) {
@@ -83,6 +85,7 @@ public class ServiceHandlerCatalog {
             if ("rule".equals(n.getNodeName())) {
                 T r = ruleClass.newInstance();
                 fillRule(e, r);
+                log.info("{} rule: {}", info, r);
                 rules.add(r);
             }
         }
@@ -182,7 +185,8 @@ public class ServiceHandlerCatalog {
         }
         props.putAll(pr.getAddProperties());
         props.put(SERVICE_JOCKEY_PROP, SERVICE_JOCKEY_PROP_VAL);
-        
+
+        log.info("Proxying service: {}", props);
         proxies.put(sr, ctx.registerService((String []) sr.getProperty(Constants.OBJECTCLASS), svc, props));
     }
 
